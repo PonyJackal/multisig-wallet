@@ -3,7 +3,7 @@ pragma solidity >=0.8.4;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MultisigWallet is Ownable {
+contract MultiSigWallet is Ownable {
     address private recoveryAddress;
     address[] public signatories;
     uint256 public numOfRequiredSignatories;
