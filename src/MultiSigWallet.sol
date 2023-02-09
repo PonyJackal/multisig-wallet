@@ -4,6 +4,7 @@ pragma solidity >=0.8.4;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MultisigWallet is Ownable {
+    address private recoveryAddress;
     address[] public signatories;
     uint256 public numOfRequiredSignatories;
     mapping(address => bool) public isSignatory;
@@ -55,7 +56,7 @@ contract MultisigWallet is Ownable {
     /** Owner Functions */
 
     /**
-     * @dev add a new signatory
+     * @dev Add a new signatory
      * @param _signatory The address of new signatory
      */
     function addSignatory(address _signatory) external onlyOwner {
@@ -69,7 +70,7 @@ contract MultisigWallet is Ownable {
     }
 
     /**
-     * @dev remove an existing signatory
+     * @dev Remove an existing signatory
      * @param _signatory The address of signatory to remove
      */
     function removeSignatory(address _signatory) external onlyOwner {
@@ -90,7 +91,7 @@ contract MultisigWallet is Ownable {
     }
 
     /**
-     * @dev update number of required signatories
+     * @dev Update number of required signatories
      * @param _numOfRequiredSignatories The number of required signatories to execute tx
      */
     function updateNumOfRequiredSignatories(uint256 _numOfRequiredSignatories) external onlyOwner {
@@ -99,10 +100,20 @@ contract MultisigWallet is Ownable {
         emit NumberOfRequiredSignatoriesUpdated(_numOfRequiredSignatories);
     }
 
+    /**
+     * @dev Set recovery address
+     * @param _recoveryAddress The recovery address
+     */
+    function setRecoveryAddress(address _recoveryAddress) external onlyOwner {
+        require(_recoveryAddress != address(0), "Invalid address");
+
+        recoveryAddress = _recoveryAddress;
+    }
+
     /** Mutative Functions */
 
     /**
-     * @dev submit a transaction
+     * @dev Submit a transaction
      * @param _destination The transaction destination address
      * @param _value The transaction value
      * @param _data The transaction data
@@ -141,7 +152,7 @@ contract MultisigWallet is Ownable {
     }
 
     /**
-     * @dev revoke a transaction confirmation
+     * @dev Revoke a transaction confirmation
      * @param _nonce The transaction nonce
      */
     function revokeTransaction(uint256 _nonce) external onlySignatory {
@@ -174,5 +185,16 @@ contract MultisigWallet is Ownable {
         require(success, "Transaction failed");
 
         emit TransactionExecuted(msg.sender, _nonce);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function recoverOwnership(address newOwner) external {
+        require(msg.sender == recoveryAddress, "Not a recovery address");
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+
+        _transferOwnership(newOwner);
     }
 }
