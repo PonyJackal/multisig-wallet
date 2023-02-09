@@ -279,4 +279,30 @@ contract MultiSigWalletTest is PRBTest, StdCheats {
 
         vm.stopPrank();
     }
+
+    /// @dev Run Forge with `-vvvv` to see console logs.
+    function testRecoverOwnership() public {
+        vm.startPrank(owner);
+        // set carol as a recovery address
+        multiSigWallet.setRecoveryAddress(carol);
+
+        // trie to set zero address as a recovery address
+        vm.expectRevert("MultiSigWallet: Invalid address");
+        multiSigWallet.setRecoveryAddress(address(0));
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        vm.expectRevert("MultiSigWallet: Not a recovery address");
+        multiSigWallet.recoverOwnership(alice);
+        vm.stopPrank();
+
+        vm.startPrank(carol);
+        // set alice as a new owner
+        multiSigWallet.recoverOwnership(alice);
+
+        address newOnwer = multiSigWallet.owner();
+        assertEq(newOnwer, alice);
+
+        vm.stopPrank();
+    }
 }
