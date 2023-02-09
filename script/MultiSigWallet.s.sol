@@ -13,8 +13,8 @@ contract DeployMultiSigWallet is Script {
 
         address[] memory signatories = new address[](3);
         signatories[0] = 0xE078c3BDEe620829135e1ab526bE860498B06339;
-        signatories[0] = 0x63E7a1983b01E3275887E5eB7DEB7930aee2FFc4;
-        signatories[0] = 0xFB6c5feE537344Db0f585d65C684fbc2A800d0a8;
+        signatories[1] = 0x63E7a1983b01E3275887E5eB7DEB7930aee2FFc4;
+        signatories[2] = 0xFB6c5feE537344Db0f585d65C684fbc2A800d0a8;
 
         uint256 numOfRequiredSignatories = 2;
         multiSigWallet = new MultiSigWallet(signatories, numOfRequiredSignatories);

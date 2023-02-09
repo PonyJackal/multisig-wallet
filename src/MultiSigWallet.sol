@@ -49,7 +49,7 @@ contract MultiSigWallet is Ownable {
 
     /** Modifiers */
     modifier onlySignatory() {
-        require(isSignatory[msg.sender], "Not a signatory");
+        require(isSignatory[msg.sender], "MultiSigWallet: Not a signatory");
         _;
     }
 
@@ -60,7 +60,7 @@ contract MultiSigWallet is Ownable {
      * @param _signatory The address of new signatory
      */
     function addSignatory(address _signatory) external onlyOwner {
-        require(!isSignatory[_signatory], "Signatory already exists");
+        require(!isSignatory[_signatory], "MultiSigWallet: Signatory already exists");
 
         isSignatory[_signatory] = true;
 
@@ -74,7 +74,7 @@ contract MultiSigWallet is Ownable {
      * @param _signatory The address of signatory to remove
      */
     function removeSignatory(address _signatory) external onlyOwner {
-        require(isSignatory[_signatory], "Signatory doesn't exist");
+        require(isSignatory[_signatory], "MultiSigWallet: Signatory doesn't exist");
 
         isSignatory[_signatory] = false;
         uint256 numOfSignatories = signatories.length;
@@ -105,7 +105,7 @@ contract MultiSigWallet is Ownable {
      * @param _recoveryAddress The recovery address
      */
     function setRecoveryAddress(address _recoveryAddress) external onlyOwner {
-        require(_recoveryAddress != address(0), "Invalid address");
+        require(_recoveryAddress != address(0), "MultiSigWallet: Invalid address");
 
         recoveryAddress = _recoveryAddress;
     }
@@ -139,11 +139,11 @@ contract MultiSigWallet is Ownable {
      * @param _nonce The transaction destination address
      */
     function confirmTransaction(uint256 _nonce) external onlySignatory {
-        require(_nonce < transactions.length, "Transaction doesn't exist");
-        require(!isConfirmed[_nonce][msg.sender], "Already confirmed");
+        require(_nonce < transactions.length, "MultiSigWallet: Transaction doesn't exist");
+        require(!isConfirmed[_nonce][msg.sender], "MultiSigWallet: Already confirmed");
 
         Transaction storage transaction = transactions[_nonce];
-        require(!transaction.executed, "Already executed");
+        require(!transaction.executed, "MultiSigWallet: Already executed");
 
         isConfirmed[_nonce][msg.sender] = true;
         transaction.numOfConfirmations++;
@@ -156,11 +156,11 @@ contract MultiSigWallet is Ownable {
      * @param _nonce The transaction nonce
      */
     function revokeTransaction(uint256 _nonce) external onlySignatory {
-        require(_nonce < transactions.length, "Transaction doesn't exist");
-        require(isConfirmed[_nonce][msg.sender], "Not confirmed");
+        require(_nonce < transactions.length, "MultiSigWallet: Transaction doesn't exist");
+        require(isConfirmed[_nonce][msg.sender], "MultiSigWallet: Not confirmed");
 
         Transaction storage transaction = transactions[_nonce];
-        require(!transaction.executed, "Already executed");
+        require(!transaction.executed, "MultiSigWallet: Already executed");
 
         isConfirmed[_nonce][msg.sender] = false;
         transaction.numOfConfirmations--;
@@ -173,16 +173,19 @@ contract MultiSigWallet is Ownable {
      * @param _nonce The transaction nonce
      */
     function executeTransaction(uint256 _nonce) external onlySignatory {
-        require(_nonce < transactions.length, "Transaction doesn't exist");
+        require(_nonce < transactions.length, "MultiSigWallet: Transaction doesn't exist");
 
         Transaction storage transaction = transactions[_nonce];
-        require(!transaction.executed, "Already executed");
-        require(transaction.numOfConfirmations >= numOfRequiredSignatories, "Cannot execute transaction");
+        require(!transaction.executed, "MultiSigWallet: Already executed");
+        require(
+            transaction.numOfConfirmations >= numOfRequiredSignatories,
+            "MultiSigWallet: Cannot execute transaction"
+        );
 
         transaction.executed = true;
 
         (bool success, ) = transaction.destination.call{ value: transaction.value }(transaction.data);
-        require(success, "Transaction failed");
+        require(success, "MultiSigWallet: Transaction failed");
 
         emit TransactionExecuted(msg.sender, _nonce);
     }
@@ -192,8 +195,8 @@ contract MultiSigWallet is Ownable {
      * Can only be called by the current owner.
      */
     function recoverOwnership(address newOwner) external {
-        require(msg.sender == recoveryAddress, "Not a recovery address");
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(msg.sender == recoveryAddress, "MultiSigWallet: Not a recovery address");
+        require(newOwner != address(0), "MultiSigWallet: Invalid address");
 
         _transferOwnership(newOwner);
     }

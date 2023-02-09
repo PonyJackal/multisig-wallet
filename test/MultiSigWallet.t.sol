@@ -29,17 +29,36 @@ contract MultiSigWalletTest is PRBTest, StdCheats {
 
         address[] memory signatories = new address[](3);
         signatories[0] = owner;
-        signatories[0] = alice;
-        signatories[0] = bob;
+        signatories[1] = alice;
+        signatories[2] = bob;
 
         uint256 numOfRequiredSignatories = 2;
 
+        vm.startPrank(owner);
         multiSigWallet = new MultiSigWallet(signatories, numOfRequiredSignatories);
+        vm.stopPrank();
     }
 
     /// @dev Run Forge with `-vvvv` to see console logs.
-    function testExample() public {
-        console2.log("Hello World");
-        assertTrue(true);
+    function testAddSignatory() public {
+        vm.startPrank(owner);
+        // add carol as a new signatory
+        multiSigWallet.addSignatory(carol);
+        // check if carol is a signatory
+        bool isCarolSignatory = multiSigWallet.isSignatory(carol);
+        assertEq(isCarolSignatory, true);
+
+        // tried to add alice as a signatory
+        vm.expectRevert("MultiSigWallet: Signatory already exists");
+        multiSigWallet.addSignatory(alice);
+
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        // alice, not owner, tried to add alice as a signatory
+        vm.expectRevert("Ownable: caller is not the owner");
+        multiSigWallet.addSignatory(bob);
+
+        vm.stopPrank();
     }
 }
