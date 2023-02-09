@@ -11,10 +11,10 @@ contract MultiSigWallet is Ownable {
 
     struct Transaction {
         address destination;
-        uint value;
+        uint256 value;
         bytes data;
         bool executed;
-        uint numOfConfirmations;
+        uint256 numOfConfirmations;
     }
 
     // mapping tx => owner => bool
@@ -37,6 +37,7 @@ contract MultiSigWallet is Ownable {
     event TransactionConfirmed(address indexed signatory, uint256 indexed nonce);
     event TransactionRevoked(address indexed signatory, uint256 indexed nonce);
     event TransactionExecuted(address indexed signatory, uint256 indexed nonce);
+    event Deposit(address indexed sender, uint amount, uint balance);
 
     constructor(address[] memory _signatories, uint256 _numOfRequiredSignatories) {
         signatories = _signatories;
@@ -199,5 +200,9 @@ contract MultiSigWallet is Ownable {
         require(newOwner != address(0), "MultiSigWallet: Invalid address");
 
         _transferOwnership(newOwner);
+    }
+
+    receive() external payable {
+        emit Deposit(msg.sender, msg.value, address(this).balance);
     }
 }
